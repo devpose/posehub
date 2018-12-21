@@ -1,0 +1,91 @@
+version: 0.0.1
+commands:
+  - git clone --progress git@github.com:devpose/dp-node.git server
+  - cd server
+  - rm -rf .git
+  - devpose:
+      command: createFile
+      name: Dockerfile
+      content: server-dockerfile
+  - cd ..
+  - npx create-react-app web
+  - cd web
+  - rm -rf .git
+  - devpose:
+      command: createFile
+      name: Dockerfile
+      content: web-dockerfile
+  - cd ..
+  - devpose:
+      command: createFile
+      name: Dockerfile
+      content: root-dockerfile
+  - devpose:
+      command: createYamlFile
+      name: docker-compose.yml
+      content: docker-compose-yml
+
+server-dockerfile:
+  - FROM node:8
+  - WORKDIR /usr/app
+  - COPY package*.json ./
+  - RUN npm install
+  - COPY . .
+  - EXPOSE 8080
+  - CMD [ "npm", "start" ]
+
+web-dockerfile:
+  - FROM node:8
+  - WORKDIR /usr/app
+  - COPY package*.json ./
+  - RUN npm install
+  - COPY . .
+  - EXPOSE 3000
+  - CMD ["npm", "start"]
+
+root-dockerfile:
+  - '# Setup and build the web'
+  - FROM node:8 as web
+  - WORKDIR /usr/app/web/
+  - COPY web/package*.json ./
+  - RUN npm install
+  - COPY web/ ./
+  - RUN npm run build
+  - '# Setup the server'
+  - FROM node:8
+  - WORKDIR /usr/app/
+  - COPY --from=web /usr/app/web/build/ ./web/build/
+  - WORKDIR /usr/app/server/
+  - COPY server/package*.json ./
+  - RUN npm install
+  - COPY server/ ./
+  - ENV PORT 8000
+  - EXPOSE 8000
+  - CMD ["npm", "start"]
+
+docker-compose-yml:
+  version: '2'
+  services:
+    server:
+      build:
+        context: ./server/
+      command: /usr/app/node_modules/.bin/nodemon index.js
+      volumes:
+        - ./server/:/usr/app
+        - /usr/app/node_modules
+      ports:
+        - '8080:8080'
+      environment:
+        - NODE_ENV=development
+        - CHOKIDAR_USEPOLLING=true
+    client:
+      build:
+        context: ./web/
+      command: npm start
+      volumes:
+        - ./web/:/usr/app
+        - /usr/app/node_modules
+      depends_on:
+        - server
+      ports:
+        - '80:3000'
