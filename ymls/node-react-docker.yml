@@ -4,7 +4,7 @@ commands:
   - cd server
   - rm -rf .git
   - devpose:
-      command: createFile
+      command: CreateFlatFile
       name: Dockerfile
       content: server-dockerfile
   - cd ..
@@ -12,16 +12,16 @@ commands:
   - cd web
   - rm -rf .git
   - devpose:
-      command: createFile
+      command: CreateFlatFile
       name: Dockerfile
       content: web-dockerfile
   - cd ..
   - devpose:
-      command: createFile
+      command: CreateFlatFile
       name: Dockerfile
       content: root-dockerfile
   - devpose:
-      command: createYamlFile
+      command: CreateYamlFile
       name: docker-compose.yml
       content: docker-compose-yml
 
