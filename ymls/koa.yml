@@ -1,0 +1,4 @@
+version: 0.0.1
+commands:
+  - git clone --progress git@github.com:devpose/koa-starter.git .
+  - rm -rf .git
